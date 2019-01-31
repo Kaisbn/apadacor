@@ -5,12 +5,12 @@ package body Map is
   function Get_Cell(pos : Point) return Cell
   is
   begin
-    return map(pos.x, pos.y);
+    return pacmap(pos.x, pos.y);
   end Get_Cell;
 
   procedure Set_Cell(pos : Point ; t_cell : Cell) is
   begin
-    map(pos.x, pos.y) := t_cell;
+    pacmap(pos.x, pos.y) := t_cell;
   end Set_Cell;
     
   procedure Print_Map

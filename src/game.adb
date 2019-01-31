@@ -1,4 +1,3 @@
-with Map; use Map;
 with STM32.Board; use STM32.Board;
 with HAL.Touch_Panel; use HAL.Touch_Panel;
 with Ada.Real_Time;
@@ -7,7 +6,7 @@ with STM32.User_Button; use STM32;
 
 package body Game is
 
-  function Move_Player(dir : Direction) return Boolean
+  function Move_Player(dir : Direction ; coins : in out Integer) return Boolean
   is
     x : Integer := 0;
     y : Integer := 0;
@@ -27,7 +26,6 @@ package body Game is
     elsif (dir = Right and then x + 1 <= Columns and then Get_Cell((y, x + 1)) /= Wall) then
       x := x + 1;
     else
-      next_dir := dir;
       return False;
     end if;
     Set_Cell((self_pos.y, self_pos.x), Air);
@@ -42,12 +40,12 @@ package body Game is
   function Nearest_Player(pos : Point) return Direction
   is
     player : Point := pos;
-    min_dist : Integer := Integer'Last;
+    min_dist : Integer := 5;
     ret : Direction := No;
     i : Natural := 0;
     cur : Cell := Wall;
   begin
-    while player.x < Columns and then i < 5 loop
+    while player.y <= Columns and then i < min_dist loop
       cur := Get_Cell(player);
       if cur = Self then
         min_dist := i;
@@ -57,11 +55,11 @@ package body Game is
         exit;
       end if;
       i := i + 1;
-      player.x := player.x + 1;
+      player.y := player.y + 1;
     end loop;
     i := 0;
     player := pos;
-    while player.x > 0 and then i < 3 and then i < min_dist loop
+    while player.y > 0 and then i < min_dist loop
       cur := Get_Cell(player);
       if cur = Self then
         min_dist := i;
@@ -71,11 +69,11 @@ package body Game is
         exit;
       end if;
       i := i + 1;
-      player.x := player.x - 1;
+      player.y := player.y - 1;
     end loop;
     i := 0;
     player := pos;
-    while player.y < Rows and then i < 3 and then i < min_dist loop
+    while player.x <= Rows and then i < min_dist loop
       cur := Get_Cell(player);
       if cur = Self then
         min_dist := i;
@@ -85,11 +83,11 @@ package body Game is
         exit;
       end if;
       i := i + 1;
-      player.y := player.y + 1;
+      player.x := player.x + 1;
     end loop;
     i := 0;
     player := pos;
-    while player.y > 0 and then i < 3 and then i < min_dist loop
+    while player.x > 0 and then i < min_dist loop
       cur := Get_Cell(player);
       if cur = Self then
         min_dist := i;
@@ -99,7 +97,7 @@ package body Game is
         exit;
       end if;
       i := i + 1;
-      player.y := player.y - 1;
+      player.x := player.x - 1;
     end loop;
     return ret;
   end Nearest_Player;
@@ -123,7 +121,6 @@ package body Game is
       end if;
       pos := enemy.Pos;
       loop
-    --LCD_Std_Out.Put_Line(Direction'Image(enemy.Dir) & " " & Integer'Image(enemy.Pos.x) & " " & Integer'Image(enemy.Pos.y));
         if (enemy.Dir = Left and then pos.y - 1 > 0 and then Get_Cell((pos.x, pos.y - 1)) /= Wall) then
           pos.y := pos.y - 1;
         elsif (enemy.Dir = Right and then pos.y + 1 < Columns and then Get_Cell((pos.x, pos.y + 1)) /= Wall) then
@@ -170,7 +167,7 @@ package body Game is
     return enemies_ret;
   end Generate_Enemies;
   
-  function Get_Next_Direction return Direction
+  function Get_Next_Direction(next_dir : Direction) return Direction
   is
     finger_pos : Point;
     function PointInTriangle (pt : Point ; v1 : Point ; v2 : Point ; v3 : Point) return Boolean
@@ -221,18 +218,20 @@ package body Game is
   is
     move_entities : Positive := 1;
     dir : Direction := Up;
+    next_dir : Direction := Up;
     not_loose : Boolean := True;
     dir_changes : Boolean := False;
+    coins : Integer := 225;
   begin
     enemies := Generate_Enemies;
     Print_Map;
     while coins /= 0 and then not_loose loop
-      next_dir := Get_Next_Direction;
+      next_dir := Get_Next_Direction(next_dir);
       if move_entities = 100 then
-        if Move_Player(next_dir) then -- Check if we use next_dir from the last user input
+        if Move_Player(next_dir, coins) then -- Check if we use next_dir from the last user input
           dir := next_dir; -- If yes, it's the new direction
         else
-          dir_changes := Move_Player(dir);
+          dir_changes := Move_Player(dir, coins);
         end if;
         not_loose := Move_Enemies;
         Print_Map;

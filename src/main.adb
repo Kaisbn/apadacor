@@ -60,9 +60,9 @@ begin
   LCD_Std_Out.Clear_Screen;
 
   if Touch_Screen then
-    LCD_Std_Out.Put_Line("Win");
+    LCD_Std_Out.Put(LCD_Natural_Width / 2 - 20, LCD_Natural_Height / 2 - 10, "Win");
   else
-    LCD_Std_Out.Put_Line("Loose");
+    LCD_Std_Out.Put(LCD_Natural_Width / 2 - 35, LCD_Natural_Height / 2 - 10, "Loose");
   end if;
   loop
       null;
